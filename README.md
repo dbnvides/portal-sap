@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Portal SAP
 
-## Getting Started
+Portal web para gestão de **itens, parceiros de negócio, vendas e recebimentos** sobre o **SAP Business One Service Layer**. Login próprio (SQLite), sidebar com menus por área e tema de cores por cliente.
 
-First, run the development server:
+**Stack:** Next.js 16 (App Router, Cache Components) · React 19 · TypeScript · Tailwind CSS v4 · SQLite nativo (`node:sqlite`) · SAP B1 Service Layer (OData).
+
+## Início rápido (sem SAP, com mock)
+
+Requisitos: Node.js **22.13+**.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local        # preencha SESSION_SECRET e ADMIN_PASSWORD
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+No `.env.local`, aponte para o mock:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+SAP_SL_URL=http://localhost:50001/b1s/v2
+SAP_COMPANY_DB=SBODEMO
+SAP_USER=manager
+SAP_PASSWORD=x
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run mock:sl     # terminal 1
+npm run dev         # terminal 2 → http://localhost:3000
+```
 
-## Learn More
+Entre com `ADMIN_EMAIL` / `ADMIN_PASSWORD` do `.env.local`.
 
-To learn more about Next.js, take a look at the following resources:
+## Scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Comando | Descrição |
+|---|---|
+| `npm run dev` | Servidor de desenvolvimento |
+| `npm run build` / `npm start` | Build e servidor de produção |
+| `npm run lint` | ESLint |
+| `npm run mock:sl` | Mock do Service Layer na porta 50001 |
+| `npm run e2e` | Testes ponta a ponta (Playwright) |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Documentação
 
-## Deploy on Vercel
+| Documento | Conteúdo |
+|---|---|
+| [docs/arquitetura.md](docs/arquitetura.md) | Visão geral, estrutura de pastas, fluxo de requisição, autenticação, cliente do Service Layer, segurança |
+| [docs/modulos.md](docs/modulos.md) | Cada tela: rotas, entidades SAP, ações e regras de negócio |
+| [docs/configuracao.md](docs/configuracao.md) | Variáveis de ambiente, temas por cliente, deploy em produção |
+| [docs/desenvolvimento.md](docs/desenvolvimento.md) | Rodar local, mock, testes, criar módulo novo, convenções, problemas comuns |
+| [PLAN.md](PLAN.md) | Plano de desenvolvimento e decisões |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Para agentes (Claude Code)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Comece pela skill `portal` (orquestrador) — ela indica os guias em `.claude/skills/portal/modulos/`. Catálogo e fluxo de exemplo: skill `portal-guia`. Regras do projeto: `CLAUDE.md` / `AGENTS.md`.

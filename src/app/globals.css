@@ -1,26 +1,51 @@
 @import "tailwindcss";
+@import "../styles/themes.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* Tokens do style guide viram classes Tailwind: bg-primary, text-muted, border-border... */
 @theme inline {
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-active-foreground: var(--sidebar-active-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --radius-theme: var(--radius);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Classes base do style guide. Componentes usam estas, não recriam. */
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-theme px-4 py-2 text-sm font-medium transition-opacity disabled:opacity-50 cursor-pointer;
+}
+@utility btn-primary {
+  @apply btn bg-primary text-primary-foreground hover:opacity-90;
+}
+@utility btn-secondary {
+  @apply btn border border-border bg-surface text-foreground hover:bg-background;
+}
+@utility btn-danger {
+  @apply btn bg-danger text-white hover:opacity-90;
+}
+@utility input {
+  @apply w-full rounded-theme border border-border bg-surface px-3 py-2 text-sm focus:outline-2 focus:outline-primary;
+}
+@utility label {
+  @apply mb-1 block text-sm font-medium text-foreground;
+}
+@utility card {
+  @apply rounded-theme border border-border bg-surface p-6;
 }
