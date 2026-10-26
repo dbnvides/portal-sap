@@ -42,6 +42,8 @@ Nada é "pronto" sem passar por aqui. Origem: bugs reais achados em code review 
 | B6 | Valor total digitado pelo usuário quando é derivável | Campo "valor" + validação "soma deve ser igual" | Calcular no servidor (soma das partes); mostrar só leitura | Alterar partes e enviar → servidor usa a soma |
 | B7 | 404 tratado de jeitos diferentes em vários lugares | `grep -rn "status === 404"` | Um helper (`slFind` → `null`); página faz `if (!x) notFound()` | Registro inexistente → 404 |
 | B8 | Sessão do serviço expira | — | Relogin automático em 401, uma vez | Reiniciar o mock durante o uso → página carrega |
+| B9 | **Leitura pelo SL / escrita por SQL** (fora do padrão) | `grep -rn "slPage\|slFind\|method: \"GET\"" src/lib/sap` ; `grep -rni "insert \|update \|delete " src/lib` em SQL de tabela SAP | GET = query/procedure (`src/lib/sql.ts`); gravação = `sl()` | Tela lista/detalhe funciona com SL desligado; gravação aparece na leitura SQL depois do `redirect` |
+| B10 | **SQL injection**: valor de usuário concatenado no SQL | `grep -rn "query(\`.*\${" src/lib` | `request.input()` + `@param`; coluna de ordenação por whitelist | Busca com `' or 1=1 --` → sem erro e sem dados extras |
 
 ## Checklist — datas, dados e código
 

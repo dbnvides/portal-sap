@@ -32,8 +32,8 @@ Next 16 tem breaking changes: em dúvida, os `references/` dos guias são as doc
 
 ## 2. Ordem de trabalho para um módulo SAP novo
 
-1. **Dados** — `src/lib/sap/<modulo>.ts` (`server-only`): tipos DTO + funções com `sl`/`slPage`, `$select` enxuto, strings via `odataString`, chaves via `key`.
-2. **Telas** — `src/app/(portal)/<rota>/page.tsx` (lista com `DataTable`+`Pagination`+`SearchForm`), `[id]/page.tsx` (detalhe com `slFind`, `notFound()` se `null`), `novo/page.tsx`; `loading.tsx` de uma linha em cada pasta.
+1. **Dados** — `src/lib/sap/<modulo>.ts` (`server-only`): tipos DTO + **leitura por SQL** (query parametrizada ou procedure `PORTAL_*`, via `src/lib/sql.ts`) + **escrita por SL** (`sl`, chaves via `key`). Nunca GET no SL para tela, nunca escrita por SQL.
+2. **Telas** — `src/app/(portal)/<rota>/page.tsx` (lista com `DataTable`+`Pagination`+`SearchForm`), `[id]/page.tsx` (detalhe por SQL, `notFound()` se `null`), `novo/page.tsx`; `loading.tsx` de uma linha em cada pasta.
 3. **Mutations** — `actions.ts` com `'use server'`: `getUser()`/`requireAdmin()` → zod → `try/catch SlError` → `{ error }` ou `redirect`.
 4. **Form** — Client Component local com `useActionState` + `SubmitButton`.
 5. **Menu** — uma linha em `src/components/menu.ts`.
@@ -43,7 +43,8 @@ Next 16 tem breaking changes: em dúvida, os `references/` dos guias são as doc
 
 ## 3. Regras que valem sempre
 
-- Reusar a fundação: `src/lib/{service-layer,dal,format}.ts`, `src/components/{ui.tsx,submit-button.tsx,menu.ts}`. Não recriar.
+- SAP: GET = query/procedure no banco; POST/PATCH/Close/Cancel = Service Layer. Detalhes em `modulos/sap-service-layer/GUIA.md`.
+- Reusar a fundação: `src/lib/{service-layer,sql,dal,format}.ts`, `src/components/{ui.tsx,submit-button.tsx,menu.ts}`. Não recriar.
 - Nada de `src/lib/*` (db, session, dal, service-layer, sap) importado em arquivo `'use client'`.
 - Sem `'use cache'` em dados do SAP. O layout `(portal)` já envolve páginas em `<Suspense>`.
 - Sem cor fixa: só tokens do style guide.

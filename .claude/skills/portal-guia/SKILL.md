@@ -31,7 +31,7 @@ Só `portal`, `portal-guia` e `verificacao-qualidade` são skills carregáveis (
 | **portal-guia** | Catálogo + fluxo de exemplo | Onboarding, dúvida sobre qual guia usar |
 | nextjs-app-router | Estrutura de pastas, Server/Client Components, fetch no servidor, Server Actions, forms com `useActionState`, `params` como Promise, env vars | Criar página, rota, componente, action, form |
 | nextjs-auth | `proxy.ts` (checagem otimista), DAL (`getUser`/`requireAdmin`), cookie de sessão, Cache Components + Suspense, DTO | Login, sessão, permissão, qualquer leitura de dado protegido |
-| sap-service-layer | Cliente `sl`/`slPage`, usuário técnico, OData (`$select`, `$filter`, `$count`), entidades por módulo, `DocEntry` × `DocNum`, Close/Cancel, formato de erro | Qualquer chamada ao SAP |
+| sap-service-layer | **Leitura por SQL (query/procedure), escrita por SL**; pool `mssql`, parâmetros, paginação `OFFSET/FETCH`, procedures `PORTAL_*`; cliente `sl`, usuário técnico, tabelas × entidades por módulo, `DocEntry` × `DocNum`, Close/Cancel, formato de erro | Qualquer leitura ou gravação no SAP |
 | style-guide | Tokens de cor por cliente (`themes.css`), classes `btn-*`/`input`/`card`, componentes `ui.tsx`, acessibilidade | Qualquer `className`, novo cliente/tema |
 | testes | lint, build, mock do SL, E2E Playwright e as regras de manter mock/e2e em dia | Validar qualquer mudança |
 | **verificacao-qualidade** | Checklist de bugs já encontrados (auth, OData, datas), regressão obrigatória, mutation check | Antes de concluir qualquer tarefa |
@@ -41,16 +41,23 @@ Só `portal`, `portal-guia` e `verificacao-qualidade` são skills carregáveis (
 **Pedido:** "Quero listar e criar pedidos de compra."
 
 1. **portal** → tarefa = *nova tela que lê e grava no SAP* → ler sap-service-layer, nextjs-app-router, nextjs-auth, style-guide, testes.
-2. **sap-service-layer** → entidade `PurchaseOrders` (ObjType 22), mesma estrutura dos documentos de venda (`DocumentLines`), parceiro `CardType eq 'cSupplier'`.
-3. **Dados** — `src/lib/sap/sales-documents.ts` já é genérico por config: o caminho mais curto é um módulo irmão `purchase-documents.ts` com a mesma forma, ou generalizar a config se mais documentos de compra vierem.
+2. **sap-service-layer** → leitura em `OPOR`/`POR1` (SQL), gravação na entidade SL `PurchaseOrders` (ObjType 22, `DocumentLines`); fornecedor = `OCRD.CardType = 'S'`.
+3. **Dados** — módulo `src/lib/sap/purchase-documents.ts`: lista/detalhe por SQL parametrizado, criação por `sl("PurchaseOrders", { method: "POST", body })`.
    ```ts
-   export function listPurchaseOrders({ q, page }: { q: string; page: number }) {
-     return slPage<DocListRow>("PurchaseOrders", {
-       select: ["DocEntry", "DocNum", "CardCode", "CardName", "DocDate", "DocTotal", "DocumentStatus", "Cancelled"],
-       filter: q ? `contains(CardName,${odataString(q)})` : undefined,
-       orderby: "DocEntry desc",
-       page,
-     });
+   export async function listPurchaseOrders({ q, page }: { q: string; page: number }) {
+     const pageSize = 20;
+     const { recordset } = await (await sqlPool()).request()
+       .input("q", q ? `%${q}%` : null)
+       .input("skip", (page - 1) * pageSize)
+       .input("take", pageSize)
+       .query<DocListRow & { Total: number }>(`
+         select T0.DocEntry, T0.DocNum, T0.CardCode, T0.CardName, T0.DocDate, T0.DocTotal,
+                T0.DocStatus, T0.CANCELED, count(*) over() as Total
+         from OPOR T0
+         where @q is null or T0.CardName like @q
+         order by T0.DocEntry desc
+         offset @skip rows fetch next @take rows only`);
+     return { rows: recordset, total: recordset[0]?.Total ?? 0, page, pageSize };
    }
    ```
 4. **nextjs-app-router** → `src/app/(portal)/compras/pedidos/page.tsx` (lista), `[docEntry]/page.tsx`, `novo/page.tsx`, `actions.ts`.
