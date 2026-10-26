@@ -10,6 +10,8 @@ mkdirSync(dirname(path), { recursive: true });
 // Reaproveita a conexão entre hot reloads do dev.
 const g = globalThis as unknown as { portalDb?: DatabaseSync };
 export const db = (g.portalDb ??= new DatabaseSync(path));
+// Build e start abrem o banco em vários workers ao mesmo tempo: espera o lock em vez de falhar ("database is locked").
+db.exec("pragma busy_timeout = 5000");
 
 db.exec(`
   create table if not exists users (
@@ -38,10 +40,10 @@ export function verifyPassword(password: string, stored: string) {
 /** Hash de uma senha aleatória: o login verifica contra ele quando o e-mail não existe (tempo constante). */
 export const DUMMY_HASH = hashPassword(randomBytes(16).toString("hex"));
 
-// Primeiro admin vem do .env quando a tabela está vazia.
+// Primeiro admin vem do .env quando a tabela está vazia ("or ignore": outro worker pode ter inserido antes).
 const { n } = db.prepare("select count(*) as n from users").get() as { n: number };
 if (n === 0 && process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
-  db.prepare("insert into users (email, name, password_hash, role) values (?, ?, ?, 'admin')").run(
+  db.prepare("insert or ignore into users (email, name, password_hash, role) values (?, ?, ?, 'admin')").run(
     process.env.ADMIN_EMAIL,
     "Administrador",
     hashPassword(process.env.ADMIN_PASSWORD),
